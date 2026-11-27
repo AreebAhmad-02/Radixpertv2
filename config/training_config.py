@@ -1,3 +1,4 @@
+"""Dataclass configs for training: per-stage settings (StageConfig) and run-level settings (TrainingConfig)."""
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 import yaml

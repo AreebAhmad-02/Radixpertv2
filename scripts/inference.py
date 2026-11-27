@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Command-line entry point and RadixpertInference class: generate reports for one image or a folder of images."""
 
 import sys
 import argparse
@@ -13,14 +14,16 @@ sys.path.insert(0, str(project_root))
 
 import torch
 from PIL import Image
-from ..models.radixpert import Radixpert, RadixpertConfig
-from ..data.transforms import get_medical_transforms
-from ..utils.device_utils import setup_device
-from ..utils.checkpoint_utils import CheckpointManager
-from ..utils.logging_utils import setup_comprehensive_logging
+from models.radixpert import Radixpert, RadixpertConfig
+from data.transforms import get_medical_transforms
+from utils.device_utils import setup_device
+from utils.checkpoint_utils import CheckpointManager
+from utils.logging_utils import setup_comprehensive_logging
 
 
 class RadixpertInference:
+    """Loads a trained checkpoint and generates reports for single images or batches."""
+
     
     def __init__(
         self,

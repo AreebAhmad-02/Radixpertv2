@@ -1,3 +1,4 @@
+"""Three-stage trainer: pre-alignment, domain adaptation, task-specific fine-tuning. Handles optimizers, validation and checkpoints."""
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,10 +13,10 @@ from collections import defaultdict
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from ..models.radixpert import Radixpert, RadixpertConfig
-from ..evaluation.metrics import RadixpertEvaluator
-from ..utils.logging_utils import setup_comprehensive_logging
-from ..utils.checkpoint_utils import CheckpointManager
+from models.radixpert import Radixpert, RadixpertConfig
+from evaluation.metrics import RadixpertEvaluator
+from utils.logging_utils import setup_comprehensive_logging
+from utils.checkpoint_utils import CheckpointManager
 from .losses import MultiStageLoss
 from .optimization import create_optimizer, create_scheduler
 
@@ -50,6 +51,8 @@ class StageConfig:
 
 
 class MultiStageTrainer:
+    """Runs the three training stages in order, creating the optimizer and scheduler per stage and saving a checkpoint after each."""
+
     def __init__(
         self,
         model_config: RadixpertConfig,
@@ -92,6 +95,7 @@ class MultiStageTrainer:
         self.logger.info(f"Device: {self.device}")
 
     def train_all_stages(self, start_stage: int = 1, end_stage: int = 3, load_checkpoint: Optional[str] = None):
+        """Train stages start_stage..end_stage, optionally resuming from a checkpoint; returns the best metrics per stage."""
         self.logger.info("="*80)
         self.logger.info("STARTING RADIXPERT MULTI-STAGE TRAINING")
         self.logger.info("="*80)
@@ -182,6 +186,7 @@ class MultiStageTrainer:
         return stage_metrics
 
     def _train_epoch(self, train_loader, optimizer, scheduler, scaler, stage_config):
+        """One pass over the training loader: forward, weighted multi-term loss, backward, gradient clipping, optimizer step."""
         self.model.train()
         total_loss = 0.0
         total_grad_norm = 0.0
@@ -356,7 +361,7 @@ def create_multi_stage_trainer(
 
 
 if __name__ == "__main__":
-    from ..models.radixpert import RadixpertConfig
+    from models.radixpert import RadixpertConfig
     model_config = RadixpertConfig(llama_model_name="meta-llama/Llama-3.2-11B-Vision-Instruct", max_length=2048, lora_rank=16, lora_alpha=32, fusion_layers=3, fusion_dim=4096)
     train_datasets = {1: None, 2: None, 3: None}  # replace with actual datasets
     val_datasets = {1: None, 2: None, 3: None}    # replace with actual datasets

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Command-line entry point: runs all training stages, then a final evaluation."""
 
 import os
 import sys
@@ -19,16 +20,16 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 
-from ..models.radixpert import Radixpert, RadixpertConfig
-from ..training.multi_stage_trainer import MultiStageTrainer, create_multi_stage_trainer
-from ..training.losses import MultiStageLoss, LossConfig
-from ..training.optimization import OptimizationConfig
-from ..data.datasets import create_multi_stage_datasets, create_padchest_config, create_roco_config
-from ..evaluation.metrics import RadixpertEvaluator, create_evaluator
-from ..config.training_config import TrainingConfig, create_stage_configs
-from ..utils.logging_utils import setup_comprehensive_logging, log_system_info, log_model_info
-from ..utils.checkpoint_utils import CheckpointManager, find_latest_checkpoint
-from ..utils.device_utils import setup_device, get_memory_info
+from models.radixpert import Radixpert, RadixpertConfig
+from training.multi_stage_trainer import MultiStageTrainer, StageConfig, create_multi_stage_trainer
+from training.losses import MultiStageLoss, LossConfig
+from training.optimization import OptimizationConfig
+from data.datasets import create_multi_stage_datasets, create_padchest_config, create_roco_config
+from evaluation.metrics import RadixpertEvaluator, create_evaluator
+from config.training_config import TrainingConfig, create_stage_configs
+from utils.logging_utils import setup_comprehensive_logging, log_system_info, log_model_info
+from utils.checkpoint_utils import CheckpointManager, find_latest_checkpoint
+from utils.device_utils import setup_device, get_memory_info
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -57,6 +58,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--wandb_project", type=str, default="radixpert", help="Weights & Biases project")
     parser.add_argument("--wandb_entity", type=str, default=None, help="Weights & Biases entity")
     parser.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases")
+    parser.add_argument("--device", type=str, default="auto", choices=["auto", "cuda", "cpu", "mps"], help="Device to train on")
     parser.add_argument("--log_level", type=str, default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Logging level")
     parser.add_argument("--config", type=str, default=None, help="YAML config file path")
     parser.add_argument("--use_sam", action="store_true", help="Use Sharpness-Aware Minimizer")
@@ -81,17 +83,32 @@ def create_configs(args):
         enable_clinical_validation=True,
         lora_rank=args.lora_rank[0]
     )
+    stage_names = {
+        1: ("Cross-Modal Pre-alignment", "Initial alignment using ROCO v2", ["roco_v2"], 1000),
+        2: ("Domain Adaptation", "Domain adaptation using ROCO v2 + PadChest", ["roco_v2", "padchest"], 1500),
+        3: ("Task-Specific Fine-tuning", "Final fine-tuning on ROCO v2 + PadChest", ["roco_v2", "padchest"], 2000),
+    }
+    default_loss_weights = LossConfig().stage_weights
     stage_cfgs = {}
     for idx, stage in enumerate([1, 2, 3]):
-        stage_cfgs[stage] = {
-            "stage": stage,
-            "batch_size": args.batch_size,
-            "num_epochs": args.num_epochs[idx] if idx < len(args.num_epochs) else 10,
-            "learning_rate": args.learning_rate[idx] if idx < len(args.learning_rate) else 1e-5,
-            "lora_rank": args.lora_rank[idx] if idx < len(args.lora_rank) else 16,
-            "eval_every_n": args.eval_every_n,
-            "save_every_n": args.save_every_n,
-        }
+        name, description, stage_datasets, warmup = stage_names[stage]
+        rank = args.lora_rank[idx] if idx < len(args.lora_rank) else 16
+        stage_cfgs[stage] = StageConfig(
+            stage=stage,
+            name=name,
+            description=description,
+            datasets=stage_datasets,
+            batch_size=args.batch_size,
+            num_epochs=args.num_epochs[idx] if idx < len(args.num_epochs) else 10,
+            learning_rate=args.learning_rate[idx] if idx < len(args.learning_rate) else 1e-5,
+            weight_decay=1e-4,
+            warmup_steps=warmup,
+            lora_rank=rank,
+            lora_alpha=rank * 2,
+            lora_dropout=0.1,
+            loss_weights=default_loss_weights[stage],
+            use_amp=args.mixed_precision,
+        )
     optim_cfg = OptimizationConfig(
         use_mixed_precision=args.mixed_precision,
         gradient_clipping=1.0,
@@ -153,8 +170,8 @@ def setup_trainer(configs, datasets, device, logger):
         trainer = MultiStageTrainer(
             model_config=model_cfg,
             stage_configs=stage_cfgs,
-            train_loaders=train_loaders,
-            val_loaders=val_loaders,
+            train_dataloaders=train_loaders,
+            val_dataloaders=val_loaders,
             device=device,
             output_dir=args.output_dir,
             log_level=args.log_level,

@@ -1,3 +1,4 @@
+"""Optimizers (AdamW variants, SAM, Lookahead), warm-up LR schedulers and gradient-clipping helpers."""
 import torch
 import torch.nn as nn
 import torch.optim as optim

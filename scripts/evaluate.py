@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Command-line entry point: evaluates a trained checkpoint on PadChest and/or ROCO v2."""
 
 import sys
 import argparse
@@ -11,13 +12,13 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import torch
-from ..models.radixpert import Radixpert, RadixpertConfig
-from ..data.datasets import create_multi_stage_datasets
-from ..evaluation.metrics import RadixpertEvaluator, create_evaluator
-from ..utils.device_utils import setup_device, get_memory_info
-from ..utils.logging_utils import setup_comprehensive_logging
-from ..utils.checkpoint_utils import CheckpointManager
-from ..utils.visualization import create_visualizer
+from models.radixpert import Radixpert, RadixpertConfig
+from data.datasets import create_multi_stage_datasets
+from evaluation.metrics import RadixpertEvaluator, create_evaluator
+from utils.device_utils import setup_device, get_memory_info
+from utils.logging_utils import setup_comprehensive_logging
+from utils.checkpoint_utils import CheckpointManager
+from utils.visualization import create_visualizer
 
 
 def parse_arguments() -> argparse.Namespace:

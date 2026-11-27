@@ -1,3 +1,4 @@
+"""Checkpoint saving, loading and lookup (latest / best)."""
 import torch
 import torch.nn as nn
 from pathlib import Path
@@ -9,6 +10,8 @@ from datetime import datetime
 
 
 class CheckpointManager:
+    """Saves checkpoints with metrics, tracks the best one, and removes old checkpoints."""
+
     def __init__(
         self,
         checkpoint_dir: Union[str, Path],
