@@ -12,10 +12,10 @@ from collections import defaultdict
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from ..models.radixpert import Radixpert, RadixpertConfig
-from ..evaluation.metrics import RadixpertEvaluator
-from ..utils.logging_utils import setup_comprehensive_logging
-from ..utils.checkpoint_utils import CheckpointManager
+from models.radixpert import Radixpert, RadixpertConfig
+from evaluation.metrics import RadixpertEvaluator
+from utils.logging_utils import setup_comprehensive_logging
+from utils.checkpoint_utils import CheckpointManager
 from .losses import MultiStageLoss
 from .optimization import create_optimizer, create_scheduler
 
@@ -356,7 +356,7 @@ def create_multi_stage_trainer(
 
 
 if __name__ == "__main__":
-    from ..models.radixpert import RadixpertConfig
+    from models.radixpert import RadixpertConfig
     model_config = RadixpertConfig(llama_model_name="meta-llama/Llama-3.2-11B-Vision-Instruct", max_length=2048, lora_rank=16, lora_alpha=32, fusion_layers=3, fusion_dim=4096)
     train_datasets = {1: None, 2: None, 3: None}  # replace with actual datasets
     val_datasets = {1: None, 2: None, 3: None}    # replace with actual datasets
