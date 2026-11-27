@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Command-line entry point: runs all training stages, then a final evaluation."""
 
 import os
 import sys

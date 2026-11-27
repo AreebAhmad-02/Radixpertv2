@@ -1,3 +1,4 @@
+"""PadChest and ROCO v2 datasets, 80/10/10 splits, and MultiDatasetLoader, which picks the datasets used in each training stage."""
 import torch
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
@@ -46,6 +47,8 @@ class DatasetConfig:
 
 
 class BaseRadiologyDataset(Dataset, ABC):
+    """Shared logic: load annotations, filter samples, 80/10/10 split, load and preprocess the image, tokenise the text."""
+
     
     def __init__(
         self,
@@ -198,6 +201,8 @@ class BaseRadiologyDataset(Dataset, ABC):
 
 
 class PadChestDataset(BaseRadiologyDataset):
+    """PadChest chest X-rays; text is "FINDINGS: <labels>. REPORT: <report>"."""
+
     
     def __init__(self, config: DatasetConfig, **kwargs):
         config.modality = "chest_xray"
@@ -282,6 +287,8 @@ class PadChestDataset(BaseRadiologyDataset):
 
 
 class ROCOv2Dataset(BaseRadiologyDataset):
+    """ROCO v2 images; text is built from anatomy, keywords and caption."""
+
     
     def __init__(self, config: DatasetConfig, **kwargs):
         config.modality = "mixed_radiology"
@@ -383,6 +390,8 @@ class ROCOv2Dataset(BaseRadiologyDataset):
 
 
 class MultiDatasetLoader:
+    """Stage 1 uses ROCO v2 only; stages 2 and 3 use ROCO v2 + PadChest."""
+
     
     def __init__(
         self,

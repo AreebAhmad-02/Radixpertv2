@@ -1,3 +1,4 @@
+"""Multi-Stage Adaptive LoRA (MSA-LoRA): LoRA layers whose rank, scaling and behaviour change across the three training stages."""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -52,6 +53,8 @@ class MSALoRAConfig:
 
 
 class MSALoRALayer(nn.Module):
+    """LoRA layer wrapping a frozen nn.Linear. Rank and scaling depend on the stage; stage 2 adds batch norm, stage 3 adds a learnable gate."""
+
     
     def __init__(
         self, 
@@ -99,6 +102,7 @@ class MSALoRALayer(nn.Module):
         nn.init.zeros_(self.lora_B)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Frozen output + LoRA update. Stage 1: update scaled by 0.1. Stage 2: update batch-normalised. Stage 3: update gated by sigmoid(adaptive_gate)."""
         original_output = self.original_layer(x)
         
         lora_output = self._compute_lora_output(x)
@@ -165,6 +169,7 @@ class MSALoRALayer(nn.Module):
         return reg_loss
     
     def update_stage(self, new_stage: int):
+        """Move the layer to a new stage, resizing the LoRA matrices to the new rank."""
         if new_stage == self.config.stage:
             return
             

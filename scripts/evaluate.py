@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Command-line entry point: evaluates a trained checkpoint on PadChest and/or ROCO v2."""
 
 import sys
 import argparse

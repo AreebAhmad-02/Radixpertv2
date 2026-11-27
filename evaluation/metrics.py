@@ -1,3 +1,4 @@
+"""Report-generation metrics (BLEU, ROUGE, CIDEr, METEOR, BERTScore, entity F1, RadCliQ-style composite). Entity F1 and the composite are simplified approximations."""
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -316,6 +317,8 @@ class BERTScoreMetric:
 
 
 class RadGraphF1Metric:
+    """Approximation of RadGraph F1: overlap of spaCy entities and anatomy/pathology keywords (not the official RadGraph model)."""
+
     
     def __init__(self, config: MetricConfig):
         self.config = config
@@ -539,6 +542,8 @@ class ClinicalAccuracyMetric:
 
 
 class RadCliQMetric:
+    """RadCliQ-style composite: equal-weight mean of BLEU-4, BERTScore, embedding similarity and entity F1, returned as radcliq_v1 = 1/(1+score). Not the official RadCliQ-v1."""
+
     
     def __init__(self, config: MetricConfig):
         self.config = config
@@ -600,6 +605,8 @@ class RadCliQMetric:
 
 
 class RadixpertEvaluator:
+    """Runs a model over a dataloader, generates reports and computes all metrics."""
+
     
     def __init__(self, config: MetricConfig = None):
         if config is None:

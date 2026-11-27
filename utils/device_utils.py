@@ -1,3 +1,4 @@
+"""Device selection and GPU memory helpers."""
 import torch
 import logging
 import psutil

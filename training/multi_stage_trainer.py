@@ -1,3 +1,4 @@
+"""Three-stage trainer: pre-alignment, domain adaptation, task-specific fine-tuning. Handles optimizers, validation and checkpoints."""
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -50,6 +51,8 @@ class StageConfig:
 
 
 class MultiStageTrainer:
+    """Runs the three training stages in order, creating the optimizer and scheduler per stage and saving a checkpoint after each."""
+
     def __init__(
         self,
         model_config: RadixpertConfig,
@@ -92,6 +95,7 @@ class MultiStageTrainer:
         self.logger.info(f"Device: {self.device}")
 
     def train_all_stages(self, start_stage: int = 1, end_stage: int = 3, load_checkpoint: Optional[str] = None):
+        """Train stages start_stage..end_stage, optionally resuming from a checkpoint; returns the best metrics per stage."""
         self.logger.info("="*80)
         self.logger.info("STARTING RADIXPERT MULTI-STAGE TRAINING")
         self.logger.info("="*80)
@@ -182,6 +186,7 @@ class MultiStageTrainer:
         return stage_metrics
 
     def _train_epoch(self, train_loader, optimizer, scheduler, scaler, stage_config):
+        """One pass over the training loader: forward, weighted multi-term loss, backward, gradient clipping, optimizer step."""
         self.model.train()
         total_loss = 0.0
         total_grad_norm = 0.0

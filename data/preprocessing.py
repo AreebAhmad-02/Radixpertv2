@@ -1,3 +1,4 @@
+"""Image preprocessing (normalisation, CLAHE, contrast, denoising) and report text cleaning for radiology data."""
 import torch
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
