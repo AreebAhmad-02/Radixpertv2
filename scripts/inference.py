@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Command-line entry point and RadixpertInference class: generate reports for one image or a folder of images."""
 
 import sys
 import argparse
@@ -21,6 +22,8 @@ from utils.logging_utils import setup_comprehensive_logging
 
 
 class RadixpertInference:
+    """Loads a trained checkpoint and generates reports for single images or batches."""
+
     
     def __init__(
         self,

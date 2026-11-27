@@ -1,3 +1,4 @@
+"""Loss terms (generation, contrastive, clinical, fusion, LoRA regularisation) and MultiStageLoss, which weights them per stage."""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -334,6 +335,8 @@ class FocalLoss(nn.Module):
 
 
 class MultiStageLoss(nn.Module):
+    """Combines the loss terms using the weights for the current stage (LossConfig.stage_weights)."""
+
     def __init__(self, config: LossConfig = None):
         super().__init__()
         if config is None:
@@ -347,6 +350,7 @@ class MultiStageLoss(nn.Module):
 
     def compute_loss(self, model_outputs: Dict[str, torch.Tensor], batch: Dict[str, Any], stage: int,
                      custom_weights: Optional[Dict[str, float]] = None) -> Dict[str, torch.Tensor]:
+        """Weighted sum of generation, contrastive, clinical and fusion losses; returns each term plus total_loss."""
         if custom_weights:
             weights = custom_weights
         else:

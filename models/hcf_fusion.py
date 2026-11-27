@@ -1,3 +1,4 @@
+"""Hierarchical Cross-Modal Fusion (HCF): cross-attention fusion of image and text features over several levels with adaptive gating."""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -53,6 +54,8 @@ class PositionalEncoding(nn.Module):
 
 
 class AdaptiveGatingMechanism(nn.Module):
+    """Learns how much of each modality passes through at a fusion level."""
+
     
     def __init__(self, config: HCFConfig):
         super().__init__()
@@ -99,6 +102,8 @@ class AdaptiveGatingMechanism(nn.Module):
 
 
 class CrossModalAttention(nn.Module):
+    """Multi-head attention where one modality queries the other."""
+
     
     def __init__(self, config: HCFConfig):
         super().__init__()
@@ -249,6 +254,8 @@ class HierarchicalFusionLayer(nn.Module):
 
 
 class HierarchicalCrossModalFusion(nn.Module):
+    """Projects vision and text features to a shared space, runs several fusion levels, combines them with an MLP and projects back."""
+
     
     def __init__(self, config: HCFConfig = None, **kwargs):
         super().__init__()
@@ -296,6 +303,7 @@ class HierarchicalCrossModalFusion(nn.Module):
         attention_mask: Optional[torch.Tensor] = None,
         return_intermediate: bool = False
     ) -> Union[Tuple[torch.Tensor, Dict], torch.Tensor]:
+        """Returns fused features (and, optionally, per-level outputs / attention weights) for the given vision and text features."""
         batch_size = vision_features.shape[0]
         
         if len(vision_features.shape) == 2:

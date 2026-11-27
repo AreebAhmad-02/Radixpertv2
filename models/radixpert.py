@@ -1,3 +1,4 @@
+"""Radixpert model: Llama-3.2-Vision wrapped with a vision encoder, hierarchical cross-modal fusion (HCF) and stage-dependent LoRA (MSA-LoRA)."""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -61,6 +62,8 @@ class RadixpertConfig:
 
 
 class Radixpert(nn.Module):
+    """Full model. Image -> VisionEncoder -> HCF fusion (with text embeddings) -> Llama (LoRA-adapted) -> report."""
+
     
     def __init__(self, config: RadixpertConfig):
         super().__init__()
@@ -102,6 +105,7 @@ class Radixpert(nn.Module):
         self._add_medical_tokens()
     
     def _init_msa_lora(self):
+        """Replace every target nn.Linear in Llama with an MSALoRALayer that wraps the original (frozen) layer."""
         msa_config = MSALoRAConfig(
             rank=self.config.lora_rank,
             alpha=self.config.lora_alpha,
@@ -129,6 +133,7 @@ class Radixpert(nn.Module):
         setattr(parent, names[-1], module)
     
     def _configure_training_stage(self):
+        """Stage 1-2: Llama frozen (only LoRA, vision encoder and HCF train). Stage 3: Llama unfrozen. Vision encoder and HCF always train."""
         if self.config.stage == 1:
             for param in self.llama_model.parameters():
                 param.requires_grad = False
@@ -172,6 +177,7 @@ class Radixpert(nn.Module):
         labels: Optional[torch.Tensor] = None,
         return_fusion_weights: bool = False
     ) -> Dict[str, torch.Tensor]:
+        """Training: returns loss and logits when input_ids are given. Without input_ids: generates report token ids from the image alone."""
         batch_size = images.size(0)
         
         vision_features = self.vision_encoder(images)
@@ -232,6 +238,7 @@ class Radixpert(nn.Module):
         temperature: float = 0.7,
         num_beams: int = 4
     ) -> List[str]:
+        """Generate report text for a batch of images, optionally guided by a text prompt (e.g. "FINDINGS: ")."""
         self.eval()
         
         with torch.no_grad():

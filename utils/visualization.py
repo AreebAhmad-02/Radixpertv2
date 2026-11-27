@@ -1,3 +1,4 @@
+"""Plots for attention maps, feature maps, training curves and generated reports."""
 import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt

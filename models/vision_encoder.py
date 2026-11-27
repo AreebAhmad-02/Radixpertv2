@@ -1,3 +1,4 @@
+"""Image branch: selectable backbone (via timm) with medical preprocessing, multi-scale features and spatial/channel attention."""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -264,6 +265,8 @@ class PositionalEncoding2D(nn.Module):
 
 
 class VisionEncoder(nn.Module):
+    """Backbone + multi-scale features + attention, producing the image features used by HCF."""
+
     
     def __init__(self, config: VisionEncoderConfig = None, **kwargs):
         super().__init__()
